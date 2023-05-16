@@ -1,0 +1,13 @@
+lr: 0.001
+batch_size: 128
+drop_prob: 0.0
+num_epochs: 800
+gnn_name: 'GINEM'
+model_name: 'N2GNN'
+num_hops: 1
+hidden_channels: 64
+num_layers: 6
+JK: 'concat'
+norm_type: "Layer"
+patience: 200
+policy: "sparse_ego"
