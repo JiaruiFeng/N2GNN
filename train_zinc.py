@@ -20,7 +20,7 @@ from models.input_encoder import EmbeddingEncoder
 def main():
     parser = train_utils.args_setup()
     parser.add_argument('--dataset_name', type=str, default="ZINC", help='Name of dataset.')
-    parser.add_argument('--runs', type=int, default=4, help='Number of repeat run.')
+    parser.add_argument('--runs', type=int, default=10, help='Number of repeat run.')
     parser.add_argument('--full', action="store_true", help="If true, run ZINC full." )
     args = parser.parse_args()
     args = train_utils.update_args(args)
