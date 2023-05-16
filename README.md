@@ -36,7 +36,7 @@ python train_zinc.py --config_file=configs/zinc_full.yaml
 ```
 
 ### Counting substructure
-For `cycle counting`, set `data=count_cycle` and `task=0, 1, 2, 3` for 3-cycles, 4-cycles, 5-cycles, and 6-cycles, respectively.
+For `cycle counting`, set `data=count_cycle` and `task=0, 1, 2, 3` for 3-cycles, 4-cycles, 5-cycles, and 6-cycles, respectively.\
 For `substructure counting`, set `data=count_graphlet` and `task=0, 1, 2, 3, 4` for tailed-triangles, chordal cycles, 4-cliques, 4-paths, and triangle-rectangle respectively.
 ```
 python train_count.py --config_file=configs/count.yaml --task=$task --dataset_name=$data
