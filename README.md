@@ -10,7 +10,7 @@ pytorch_lightning=1.9.4
 torchmetrics=0.11.3
 wandb=0.13.11
 ```
-Before run the experiments, you need to set up [wandb](https://docs.wandb.ai/quickstart#1.-set-up-wandb). Additionally, we notice that Pytorch_lightning released version 2.0 with some major updates, which not consistent with our adopt version. Please make sure you install the correct version. We will upgrade to the latest version as soon as possible.  
+Before run the experiments, you need to set up [wandb](https://docs.wandb.ai/quickstart#1.-set-up-wandb). Additionally, we notice that Pytorch_lightning released version 2.0 with some major updates, which is not consistent with our adopted version. Please make sure you install the correct version. We will upgrade to the latest version as soon as possible.  
 
 ### Usage
 The result for all experiments will be uploaded to Wandb server with the project named as: 
