@@ -7,7 +7,6 @@ model_name: 'N2GNN'
 num_hops: 1
 hidden_channels: 64
 num_layers: 6
-JK: 'concat'
 norm_type: "Layer"
 patience: 200
 policy: "sparse_ego"
