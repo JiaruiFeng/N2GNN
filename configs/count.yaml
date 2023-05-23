@@ -4,7 +4,7 @@ batch_size: 256
 drop_prob: 0.0
 num_epochs: 2000
 gnn_name: 'GINEM'
-model_name: 'N2GNN+'
+model_name: 'N2GNN'
 hidden_channels: 96
 num_layers: 5
 runs: 3

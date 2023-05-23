@@ -14,7 +14,7 @@ Before run the experiments, you need to set up [wandb](https://docs.wandb.ai/qui
 
 ### Usage
 The result for all experiments will be uploaded to Wandb server with the project named as: 
-`<task>_<dataset_name>_(GNN_layer)_<GNN_model>_<num_layer>_<hidden_channels>_<data_type>_<num_hop>_<rd>`.\
+`<task>_<dataset_name>_<GNN_layer>_<GNN_model>_<num_layer>_<hidden_channels>_<data_type>_<num_hop>_<rd>`.\
 `task`: The number index of the task if dataset has multiple tasks (QM9, count).\
 `GNN_layer`: Name of GNN layer. See detail in `models/gnn_conv.py`.\
 `GNN_model`: Name of GNN model. See detail in `models/GNNs.py`.\
