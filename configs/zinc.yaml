@@ -8,5 +8,3 @@ num_hops: 3
 hidden_channels: 96
 num_layers: 6
 runs: 10
-JK: 'last'
-pooling_method: "mean"

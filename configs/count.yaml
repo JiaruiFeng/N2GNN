@@ -8,7 +8,6 @@ model_name: 'N2GNN'
 hidden_channels: 96
 num_layers: 5
 runs: 3
-JK: 'last'
 patience: 10
 factor: 0.9
 norm_type: "None"
