@@ -112,9 +112,8 @@ def main():
                         ]
                         )
 
-        trainer.fit(modelmodule, datamodule)
-        modelmodule.set_test_eval_still()
-        val_result, test_result = trainer.validate(modelmodule, datamodule, ckpt_path="best")
+        trainer.fit(modelmodule, datamodule=datamodule)
+        val_result, test_result = trainer.test(modelmodule, datamodule=datamodule, ckpt_path="best")
         results = {"final/best_val_metric": val_result["val/metric"],
                    "final/best_test_metric": test_result["test/metric"],
                    "final/avg_train_time_epoch": timer.time_elapsed("train") / args.num_epochs,

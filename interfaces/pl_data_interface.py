@@ -3,7 +3,6 @@ Pytorch lightning data module for PyG dataset.
 """
 
 from typing import Tuple
-
 import pytorch_lightning as pl
 from torch_geometric.data import Dataset
 from torch_geometric.loader import DataLoader
@@ -18,6 +17,7 @@ class PlPyGDataModule(pl.LightningDataModule):
         batch_size (int): Batch size.
         num_workers (int): Number of process for data loader.
         follow_batch (list): A list of key that will create a corresponding batch key in data loader.
+        drop_last (bool): If true, drop the last batch during the training to avoid loss/metric inconsistence.
     """
 
     def __init__(self,
@@ -26,7 +26,8 @@ class PlPyGDataModule(pl.LightningDataModule):
                  test_dataset: Dataset,
                  batch_size: int = 32,
                  num_workers: int = 0,
-                 follow_batch: list = []):
+                 follow_batch: list = [],
+                 drop_last: bool = True):
         super(PlPyGDataModule, self).__init__()
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
@@ -34,6 +35,7 @@ class PlPyGDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.follow_batch = follow_batch
+        self.drop_last = drop_last
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.train_dataset,
@@ -41,7 +43,7 @@ class PlPyGDataModule(pl.LightningDataModule):
                           num_workers=self.num_workers,
                           shuffle=True,
                           follow_batch=self.follow_batch,
-                          drop_last=True)
+                          drop_last=self.drop_last)
 
     def val_dataloader(self) -> DataLoader:
         return DataLoader(self.val_dataset,
@@ -74,3 +76,6 @@ class PlPyGDataTestonValModule(PlPyGDataModule):
                            num_workers=self.num_workers,
                            shuffle=False,
                            follow_batch=self.follow_batch))
+
+    def test_dataloader(self) -> Tuple[DataLoader, DataLoader]:
+        return self.val_dataloader()

@@ -49,6 +49,10 @@ def args_setup():
                                                                   "sparse_noego"),
                         help="Policy of data generation in N2GNN. If dense, keep tuple that don't have any aggregation."
                              "if ego, further restrict all tuple mask have distance less than num_hops.")
+    parser.add_argument('--message_pool', default="plain", choices=("plain", "hierarchical"),
+                        help="message pooling way in N2GNN, if set to plain, pooling all edges together. If set to"
+                             "hierarchical, compute index during preprocessing for hierarchical pooling, must be used"
+                             "with corresponding gnn convolutional layer.")
     parser.add_argument('--reprocess', action="store_true", help='Whether to reprocess the dataset')
 
     # model args
@@ -126,6 +130,11 @@ def update_args(args: argparse.ArgumentParser, add_task=True) -> argparse.Argume
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
 
+    if args.message_pool == "plain":
+        assert args.gnn_name in ["GINEC", "GINEM"]
+    elif args.message_pool == "hierarchical":
+        assert args.gnn_name in ["GINECH", "GINEMH"]
+
     return args
 
 
@@ -136,10 +145,12 @@ def data_setup(args: argparse.ArgumentParser) -> Tuple[str, Callable, list]:
     """
     update_style = args.model_name[:5]
     path_arg_list = [f"data/{args.dataset_name}"]
-    path_arg_list.extend([update_style, str(args.num_hops)])
+    path_arg_list.extend([update_style, str(args.num_hops), args.policy, args.message_pool])
 
     sparse = False
     ego_net = True
+    hierarchical = False
+    add_rd = False
     if args.policy == "sparse_ego":
         sparse = True
     elif args.policy == "sparse_noego":
@@ -147,14 +158,22 @@ def data_setup(args: argparse.ArgumentParser) -> Tuple[str, Callable, list]:
         ego_net = False
     elif args.policy == "dense_noego":
         ego_net = False
-    path_arg_list.append(args.policy)
+    if args.message_pool == "hierarchical":
+        hierarchical = True
+    if args.add_rd:
+        add_rd = True
 
-    pre_transform = data_utils.get_data_transform(update_style, args.num_hops, sparse, ego_net)
+    pre_transform = data_utils.get_data_transform(update_style,
+                                                  args.num_hops,
+                                                  sparse,
+                                                  ego_net,
+                                                  hierarchical,
+                                                  add_rd)
 
     follow_batch = []
     path = "_".join(path_arg_list)
-    if os.path.exists(path) and args.reprocess:
-        shutil.rmtree(path)
+    if os.path.exists(path + "/processed") and args.reprocess:
+        shutil.rmtree(path + "/processed")
 
     return path, pre_transform, follow_batch
 

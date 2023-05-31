@@ -59,35 +59,33 @@ def main():
                                           test_dataset=test_dataset,
                                           batch_size=args.batch_size,
                                           num_workers=args.num_workers,
-                                          follow_batch=follow_batch)
+                                          follow_batch=follow_batch,
+                                          drop_last=False)
 
     loss_cri = nn.CrossEntropyLoss()
     evaluator = torchmetrics.classification.MulticlassAccuracy(num_classes=args.out_channels)
     init_encoder = EmbeddingEncoder(2, args.hidden_channels)
-
-
     modelmodule = PlGNNTestonValModule(loss_criterion=loss_cri,
                                        evaluator=evaluator,
                                        args=args,
                                        init_encoder=init_encoder)
-    trainer = Trainer(
-                    accelerator="auto",
-                    devices="auto",
-                    max_epochs=args.num_epochs,
-                    enable_checkpointing=True,
-                    enable_progress_bar=True,
-                    logger=logger,
-                    callbacks=[
+
+    trainer = Trainer(accelerator="auto",
+                      devices="auto",
+                      max_epochs=args.num_epochs,
+                      enable_checkpointing=True,
+                      enable_progress_bar=True,
+                      logger=logger,
+                      callbacks=[
                         TQDMProgressBar(refresh_rate=20),
                         ModelCheckpoint(monitor="val/metric", mode="max"),
                         LearningRateMonitor(logging_interval="epoch"),
                         timer
-                    ]
-                    )
+                      ]
+                      )
 
-    trainer.fit(modelmodule, datamodule)
-    modelmodule.set_test_eval_still()
-    val_result, test_result = trainer.validate(modelmodule, datamodule, ckpt_path="best")
+    trainer.fit(modelmodule, datamodule=datamodule)
+    val_result, test_result = trainer.test(modelmodule, datamodule=datamodule, ckpt_path="best")
     results = {"final/best_val_metric": val_result["val/metric"],
                "final/best_test_metric": test_result["test/metric"],
                "final/avg_train_time_epoch": timer.time_elapsed("train") / args.num_epochs,

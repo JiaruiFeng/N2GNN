@@ -55,25 +55,18 @@ class PlGNNModule(pl.LightningModule):
                  loss,
                  prog_bar=True,
                  batch_size=self.args.batch_size)
+        self.train_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y}
 
-    def training_step_end(self,
-                          outputs: Dict) -> None:
-        self.train_evaluator.update(outputs["preds"], outputs["target"])
-
-    def training_epoch_end(self,
-                           outputs: List) -> None:
+    def on_train_epoch_end(self) -> None:
         self.log("train/metric",
                  self.train_evaluator.compute(),
-                 on_epoch=True,
-                 on_step=False,
                  prog_bar=False)
         self.train_evaluator.reset()
 
     def validation_step(self,
                         batch: Data,
-                        batch_idx: Tensor,
-                        data_loader_idx: int) -> Dict:
+                        batch_idx: Tensor) -> Dict:
         y = batch.y.squeeze()
         out = self.model(batch).squeeze()
         loss = self.loss_criterion(out, y)
@@ -81,18 +74,12 @@ class PlGNNModule(pl.LightningModule):
                  loss,
                  prog_bar=False,
                  batch_size=self.args.batch_size)
+        self.val_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y}
 
-    def validation_step_end(self,
-                            outputs: Dict) -> None:
-        self.val_evaluator.update(outputs["preds"], outputs["target"])
-
-    def validation_epoch_end(self,
-                             outputs: List) -> None:
+    def on_validation_epoch_end(self) -> None:
         self.log("val/metric",
                  self.val_evaluator.compute(),
-                 on_epoch=True,
-                 on_step=False,
                  prog_bar=True)
         self.val_evaluator.reset()
 
@@ -106,18 +93,12 @@ class PlGNNModule(pl.LightningModule):
                  loss,
                  prog_bar=False,
                  batch_size=self.args.batch_size)
+        self.test_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y}
 
-    def test_step_end(self,
-                      outputs: Dict) -> None:
-        self.test_evaluator.update(outputs["preds"], outputs["target"])
-
-    def test_epoch_end(self,
-                       outputs: List) -> None:
+    def on_test_epoch_end(self) -> None:
         self.log("test/metric",
                  self.test_evaluator.compute(),
-                 on_epoch=True,
-                 on_step=False,
                  prog_bar=True)
         self.test_evaluator.reset()
 
@@ -147,7 +128,8 @@ class PlGNNModule(pl.LightningModule):
 
 
 class PlGNNTestonValModule(PlGNNModule):
-    r"""Given a preset evaluation interval, run test dataset when meet the interval.
+    r"""Given a preset evaluation interval, run test dataset during validation
+        to have a snoop on test performance when meet the interval during .
     """
 
     def __init__(self,
@@ -163,9 +145,9 @@ class PlGNNTestonValModule(PlGNNModule):
     def validation_step(self,
                         batch: Data,
                         batch_idx: Tensor,
-                        data_loader_idx: int) -> Dict:
+                        dataloader_idx: int) -> Dict:
 
-        if data_loader_idx == 0:
+        if dataloader_idx == 0:
             y = batch.y.squeeze()
             out = self.model(batch)
             loss = self.loss_criterion(out, y)
@@ -174,9 +156,10 @@ class PlGNNTestonValModule(PlGNNModule):
                      prog_bar=False,
                      batch_size=self.args.batch_size,
                      add_dataloader_idx=False)
+            self.val_evaluator.update(out, y)
         else:
             if self.test_eval_still != 0:
-                return {'loader_idx': data_loader_idx}
+                return {'loader_idx': dataloader_idx}
             # only do validation on test set when reaching the predefined epoch.
             else:
                 y = batch.y.squeeze()
@@ -187,33 +170,18 @@ class PlGNNTestonValModule(PlGNNModule):
                          prog_bar=False,
                          batch_size=self.args.batch_size,
                          add_dataloader_idx=False)
-        return {'loss': loss, 'preds': out, 'target': y, 'loader_idx': data_loader_idx}
+                self.test_evaluator.update(out, y)
+        return {'loss': loss, 'preds': out, 'target': y, 'loader_idx': dataloader_idx}
 
-    def validation_step_end(self,
-                            outputs: Dict) -> None:
-        data_loader_idx = outputs["loader_idx"]
-        if data_loader_idx == 0:
-            self.val_evaluator.update(outputs["preds"], outputs["target"])
-        else:
-            if self.test_eval_still != 0:
-                return
-            else:
-                self.test_evaluator.update(outputs["preds"], outputs["target"])
-
-    def validation_epoch_end(self,
-                             outputs: Dict) -> None:
+    def on_validation_epoch_end(self) -> None:
         self.log("val/metric",
                  self.val_evaluator.compute(),
-                 on_epoch=True,
-                 on_step=False,
                  prog_bar=True,
                  add_dataloader_idx=False)
         self.val_evaluator.reset()
         if self.test_eval_still == 0:
             self.log("test/metric",
                      self.test_evaluator.compute(),
-                     on_epoch=True,
-                     on_step=False,
                      prog_bar=True,
                      add_dataloader_idx=False)
             self.test_evaluator.reset()
@@ -222,4 +190,22 @@ class PlGNNTestonValModule(PlGNNModule):
             self.test_eval_still = self.test_eval_still - 1
 
     def set_test_eval_still(self):
+        # set test validation interval to zero to performance test dataset validation.
         self.test_eval_still = 0
+
+    def on_test_epoch_start(self) -> None:
+        self.set_test_eval_still()
+
+    def test_step(self,
+                  batch: Data,
+                  batch_idx: Tensor,
+                  dataloader_idx: int) -> Dict:
+        results = self.validation_step(batch, batch_idx, dataloader_idx)
+        return results
+
+    def on_test_epoch_end(self) -> None:
+        self.on_validation_epoch_end()
+
+
+
+

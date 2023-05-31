@@ -153,6 +153,5 @@ class N2GNN(nn.Module):
 
             h_list.append(out)
 
-        # pooling
         h_list = [global_add_pool(h, node_idx) for h in h_list]
         return self.jk_decoder(h_list)

@@ -1,62 +1,60 @@
 """
-script to train on ZINC task.
+script to train on EXP task.
 """
-import torch.cuda
+import torch
 import torch.nn as nn
-import torchmetrics
-import wandb
+from datasets.PlanarSATPairsDataset import PlanarSATPairsDataset
+from models.input_encoder import EmbeddingEncoder
+import train_utils
 import pytorch_lightning as pl
+from interfaces.pl_model_interface import PlGNNTestonValModule
+from interfaces.pl_data_interface import PlPyGDataTestonValModule
 from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Timer
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
-from pytorch_lightning.loggers import WandbLogger
-from torch_geometric.datasets import ZINC
-import train_utils
-from interfaces.pl_data_interface import PlPyGDataTestonValModule
-from interfaces.pl_model_interface import PlGNNTestonValModule
-from models.input_encoder import EmbeddingEncoder
+import torchmetrics
+import wandb
+from torch_geometric.data import Data
+from torch_geometric.utils import sort_edge_index
+import torch_geometric.transforms as T
 
+def sort_pyg_edge_index(data: Data) -> Data:
+    data.edge_index = sort_edge_index(data.edge_index)
+    return data
 
 def main():
     parser = train_utils.args_setup()
-    parser.add_argument('--dataset_name', type=str, default="ZINC", help='Name of dataset.')
-    parser.add_argument('--runs', type=int, default=10, help='Number of repeat run.')
-    parser.add_argument('--full', action="store_true", help="If true, run ZINC full." )
+    parser.add_argument('--dataset_name', type=str, default="EXP", help='Name of dataset.')
+    parser.add_argument('--folds', type=int, default=10, help='Number of fold in K-fold cross validation.')
     args = parser.parse_args()
     args = train_utils.update_args(args)
-    if args.full:
-        args.exp_name = "full_" + args.exp_name
+
     path, pre_transform, follow_batch = train_utils.data_setup(args)
 
-    train_dataset = ZINC(path,
-                         subset=not args.full,
-                         split="train",
-                         pre_transform=pre_transform,
-                         transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
+    dataset = PlanarSATPairsDataset(root=path,
+                                    pre_transform=T.Compose([sort_pyg_edge_index, pre_transform]),
+                                    transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
+    args.out_channels = dataset.num_classes
 
-    val_dataset = ZINC(path,
-                       subset=not args.full,
-                       split="val",
-                       pre_transform=pre_transform,
-                       transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
+    for fold, (train_idx, test_idx, val_idx) in enumerate(
+            zip(*train_utils.k_fold(dataset, args.folds, args.seed))):
 
-    test_dataset = ZINC(path,
-                        subset=True,
-                        split="test",
-                        pre_transform=pre_transform,
-                        transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
+        # Set random seed
+        seed = train_utils.get_seed(args.seed)
+        pl.seed_everything(seed)
 
-    for i in range(1, args.runs + 1):
-        logger = WandbLogger(name=f'run_{str(i)}',
+        train_dataset = dataset[train_idx]
+        val_dataset = dataset[val_idx]
+        test_dataset = dataset[test_idx]
+
+
+        logger = WandbLogger(name=f'fold_{str(fold+1)}',
                              project=args.exp_name,
                              save_dir=args.save_dir,
                              offline=args.offline)
         logger.log_hyperparams(args)
         timer = Timer(duration=dict(weeks=4))
-
-        # Set random seed
-        seed = train_utils.get_seed(args.seed)
-        pl.seed_everything(seed)
 
         datamodule = PlPyGDataTestonValModule(train_dataset=train_dataset,
                                               val_dataset=val_dataset,
@@ -64,17 +62,14 @@ def main():
                                               batch_size=args.batch_size,
                                               num_workers=args.num_workers,
                                               follow_batch=follow_batch)
-        loss_cri = nn.L1Loss()
-        evaluator = torchmetrics.MeanAbsoluteError()
-
-        init_encoder = EmbeddingEncoder(28, args.hidden_channels)
-        edge_encoder = EmbeddingEncoder(4, args.hidden_channels)
+        loss_cri = nn.CrossEntropyLoss()
+        evaluator = torchmetrics.classification.MulticlassAccuracy(num_classes=dataset.num_classes)
+        init_encoder = EmbeddingEncoder(2, args.hidden_channels)
 
         modelmodule = PlGNNTestonValModule(loss_criterion=loss_cri,
                                            evaluator=evaluator,
                                            args=args,
-                                           init_encoder=init_encoder,
-                                           edge_encoder=edge_encoder)
+                                           init_encoder=init_encoder)
         trainer = Trainer(accelerator="auto",
                           devices="auto",
                           max_epochs=args.num_epochs,
@@ -82,7 +77,7 @@ def main():
                           enable_progress_bar=True,
                           logger=logger,
                           callbacks=[TQDMProgressBar(refresh_rate=20),
-                                     ModelCheckpoint(monitor="val/metric", mode="min"),
+                                     ModelCheckpoint(monitor="val/metric", mode="max"),
                                      LearningRateMonitor(logging_interval="epoch"),
                                      timer])
 
