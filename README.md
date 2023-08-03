@@ -40,7 +40,7 @@ For `cycle counting`, set `data=count_cycle` and `task=0, 1, 2, 3` for 3-cycles,
 For `substructure counting`, set `data=count_graphlet` and `task=0, 1, 2, 3, 4` for tailed-triangles, chordal cycles, 4-cliques, 4-paths, and triangle-rectangle, respectively.
 Additionally, set the number of hop `h` for different tasks. You can find exact setting in the paper.
 ```
-python train_count.py --config_file=configs/count.yaml --task=$task --dataset_name=$data --h=$h
+python train_count.py --config_file=configs/count.yaml --task=$task --dataset_name=$data --num_hops=$h
 ```
 
 ### QM9
