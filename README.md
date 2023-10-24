@@ -1,11 +1,13 @@
 # N2GNN
 This repository is the official implementation of the N2-GNN proposed in the [[NeurIPS23]Extending the Design Space of Graph Neural Networks by Rethinking Folklore Weisfeiler-Lehman](https://arxiv.org/pdf/2306.03266.pdf) (previous named "Towards Arbitrarily Expressive GNNs in $O(n^2)$ Space by Rethinking Folklore Weisfeiler-Lehman").
 
-### News
-In version 2.0, we:
-1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail and new results will be provided in the camera-ready version of the paper. Stay tuned!
-2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC).
-3. Minor bugs fixing and comment polishing. 
+### 🔥News
+- **2023. 10**: Update code base to version 2.0. In version 2.0, we:
+  1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail will be provided in the camera-ready version of the paper. Stay tuned!
+  2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC).
+  3. Minor bugs fixing and comment polishing. 
+
+- **2023. 09**: Our paper is accepted at NeurIPS 2023!
 
 ### Requirements
 ```
