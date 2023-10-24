@@ -1,0 +1,15 @@
+lr: 0.0001
+batch_size: 4
+drop_prob: 0.0
+num_epochs: 20
+gnn_name: 'GINEM'
+model_name: 'N2GNN'
+num_hops: 8
+hidden_channels: 64
+inner_channels: 32
+num_layers: 4
+policy: "sparse_ego"
+pooling_method: "sum"
+out_channels: 16
+runs: 10
+onthefly: True

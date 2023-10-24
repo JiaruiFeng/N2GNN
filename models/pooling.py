@@ -15,9 +15,7 @@ class Pooling(nn.Module):
         pooling_method (str): Graph pooling method, choosing from (sum, mean, max, attention).
     """
 
-    def __init__(self,
-                 hidden_channels: int,
-                 pooling_method: str):
+    def __init__(self, hidden_channels: int, pooling_method: str):
         super(Pooling, self).__init__()
         self.hidden_channels = hidden_channels
         self.pooling_method = pooling_method
@@ -40,7 +38,5 @@ class Pooling(nn.Module):
         if self.pooling_method == "attention":
             self.pool.reset_parameters()
 
-    def forward(self,
-                x: Tensor,
-                batch: Tensor) -> Tensor:
+    def forward(self, x: Tensor, batch: Tensor) -> Tensor:
         return self.pool(x, batch)

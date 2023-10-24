@@ -4,39 +4,42 @@ EXP dataset.
 
 import os
 import pickle
+from typing import Callable, Optional, List
+
 import torch
 from torch_geometric.data import InMemoryDataset, Data
-from typing import Callable
 
-# NAME = "GRAPHSAT"
+
 class PlanarSATPairsDataset(InMemoryDataset):
     r"""EXP dataset.
     Args:
         root (str): Root path for saving dataset.
-        transform (Callable): Data transformation function after saving.
-        pre_transform (Callable): Data transformation function before saving.
+        dataname (str, optional): Dataset name for loading.
+        transform (Callable, optional): Data transformation function after saving.
+        pre_transform (Callable, optional): Data transformation function before saving.
     """
+
     def __init__(self,
                  root: str,
-                 dataname: str = "EXP",
-                 transform: Callable = None,
-                 pre_transform: Callable = None):
+                 dataname: Optional[str] = "EXP",
+                 transform: Optional[Callable] = None,
+                 pre_transform: Optional[Callable] = None):
         self.dataname = dataname
         self.processed = os.path.join(root, self.dataname, "processed")
         super().__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
-    def raw_dir(self):
+    def raw_dir(self) -> str:
         name = 'raw'
         return os.path.join("data", self.dataname, name)
 
     @property
-    def raw_file_names(self):
+    def raw_file_names(self) -> List[str]:
         return ["GRAPHSAT.pkl"]
 
     @property
-    def processed_file_names(self):
+    def processed_file_names(self) -> str:
         return 'data.pt'
 
     def download(self):
@@ -54,9 +57,3 @@ class PlanarSATPairsDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
-
-
-if __name__ == "__main__":
-    test_path = "../data/EXP/"
-    dataset = PlanarSATPairsDataset(test_path)
-    print(dataset[0])

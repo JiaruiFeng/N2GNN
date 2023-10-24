@@ -2,8 +2,9 @@
 SR25 dataset.
 """
 
+from typing import Optional, Callable, List
+
 import networkx as nx
-import numpy as np
 import torch
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.data.data import Data
@@ -14,22 +15,23 @@ class SRDataset(InMemoryDataset):
     r"""Strong regular graph dataset, which contains 15 strong regular graphs with the same intersection array.
     Args:
         root (str): Root path for saving dataset.
-        transform (Callable): Data transformation function after saving.
-        pre_transform (Callable): Data transformation function before saving.
+        transform (Callable, optional): Data transformation function after saving.
+        pre_transform (Callable, optional): Data transformation function before saving.
     """
+
     def __init__(self,
-                 root,
-                 transform=None,
-                 pre_transform=None):
+                 root: str,
+                 transform: Optional[Callable] = None,
+                 pre_transform: Optional[Callable] = None, ):
         super(SRDataset, self).__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
-    def raw_file_names(self):
+    def raw_file_names(self) -> List[str]:
         return ["sr251256.g6"]  # sr251256  sr351668
 
     @property
-    def processed_file_names(self):
+    def processed_file_names(self) -> str:
         return 'data.pt'
 
     def download(self):
@@ -53,11 +55,3 @@ class SRDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
-
-
-def calculate_stats(dataset):
-    num_graphs = len(dataset)
-    ave_num_nodes = np.array([g.num_nodes for g in dataset]).mean()
-    ave_num_edges = np.array([g.num_edges for g in dataset]).mean()
-    print(
-        f'# Graphs: {num_graphs}, average # nodes per graph: {ave_num_nodes}, average # edges per graph: {ave_num_edges}.')

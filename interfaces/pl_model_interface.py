@@ -4,9 +4,9 @@ Pytorch lightning model module for PyG model.
 
 from argparse import ArgumentParser
 from copy import deepcopy as c
-from typing import Dict, List
+from typing import Dict, Optional
 
-import pytorch_lightning as pl
+from lightning.pytorch import LightningModule
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -16,22 +16,22 @@ from torchmetrics import Metric
 from models.model_construction import make_model
 
 
-class PlGNNModule(pl.LightningModule):
+class PlGNNModule(LightningModule):
     r"""Basic pytorch lighting module for GNNs.
     Args:
         loss_criterion (nn.Module) : Loss compute module.
         evaluator (Metric): Evaluator for evaluating model performance.
         args (ArgumentParser): Arguments dict from argparser.
-        init_encoder (nn.Module): Node feature initial encoder.
-        edge_encoder (nn.Module): Edge feature encoder.
+        init_encoder (nn.Module, optional): Node feature initial encoder.
+        edge_encoder (nn.Module, optional): Edge feature encoder.
     """
 
     def __init__(self,
                  loss_criterion: nn.Module,
                  evaluator: Metric,
                  args: ArgumentParser,
-                 init_encoder: nn.Module = None,
-                 edge_encoder: nn.Module = None,
+                 init_encoder: Optional[nn.Module] = None,
+                 edge_encoder: Optional[nn.Module] = None,
                  ):
         super(PlGNNModule, self).__init__()
         self.model = make_model(args, init_encoder, edge_encoder)
@@ -41,13 +41,10 @@ class PlGNNModule(pl.LightningModule):
         self.test_evaluator = c(evaluator)
         self.args = args
 
-    def forward(self,
-                data: Data) -> Tensor:
+    def forward(self, data: Data) -> Tensor:
         return self.model(data)
 
-    def training_step(self,
-                      batch: Data,
-                      batch_idx: Tensor) -> Dict:
+    def training_step(self, batch: Data, batch_idx: Tensor) -> Dict:
         y = batch.y.squeeze()
         out = self.model(batch).squeeze()
         loss = self.loss_criterion(out, y)
@@ -58,15 +55,13 @@ class PlGNNModule(pl.LightningModule):
         self.train_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y}
 
-    def on_train_epoch_end(self) -> None:
+    def on_train_epoch_end(self):
         self.log("train/metric",
                  self.train_evaluator.compute(),
                  prog_bar=False)
         self.train_evaluator.reset()
 
-    def validation_step(self,
-                        batch: Data,
-                        batch_idx: Tensor) -> Dict:
+    def validation_step(self, batch: Data, batch_idx: Tensor) -> Dict:
         y = batch.y.squeeze()
         out = self.model(batch).squeeze()
         loss = self.loss_criterion(out, y)
@@ -77,15 +72,13 @@ class PlGNNModule(pl.LightningModule):
         self.val_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y}
 
-    def on_validation_epoch_end(self) -> None:
+    def on_validation_epoch_end(self):
         self.log("val/metric",
                  self.val_evaluator.compute(),
                  prog_bar=True)
         self.val_evaluator.reset()
 
-    def test_step(self,
-                  batch: Data,
-                  batch_idx: Tensor) -> Dict:
+    def test_step(self, batch: Data, batch_idx: Tensor) -> Dict:
         y = batch.y.squeeze()
         out = self.model(batch).squeeze()
         loss = self.loss_criterion(out, y)
@@ -102,7 +95,7 @@ class PlGNNModule(pl.LightningModule):
                  prog_bar=True)
         self.test_evaluator.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Dict:
         optimizer = torch.optim.Adam(
             self.model.parameters(),
             lr=self.args.lr,
@@ -120,7 +113,8 @@ class PlGNNModule(pl.LightningModule):
             },
         }
 
-    def get_progress_bar_dict(self):
+    def get_progress_bar_dict(self) -> Dict:
+        r"""Remove 'v_num' in progress bar for clarity"""
         tqdm_dict = super().get_progress_bar_dict()
         if 'v_num' in tqdm_dict:
             del tqdm_dict['v_num']
@@ -129,17 +123,17 @@ class PlGNNModule(pl.LightningModule):
 
 class PlGNNTestonValModule(PlGNNModule):
     r"""Given a preset evaluation interval, run test dataset during validation
-        to have a snoop on test performance when meet the interval during .
+        to have a snoop on test performance every args.test_eval_interval epochs during training.
     """
 
     def __init__(self,
                  loss_criterion: nn.Module,
                  evaluator: Metric,
                  args: ArgumentParser,
-                 init_encoder: nn.Module = None,
-                 edge_encoder: nn.Module = None,
+                 init_encoder: Optional[nn.Module] = None,
+                 edge_encoder: Optional[nn.Module] = None,
                  ):
-        super().__init__(loss_criterion, evaluator, args, init_encoder, edge_encoder)
+        super(PlGNNTestonValModule, self).__init__(loss_criterion, evaluator, args, init_encoder, edge_encoder)
         self.test_eval_still = self.args.test_eval_interval
 
     def validation_step(self,
@@ -173,7 +167,7 @@ class PlGNNTestonValModule(PlGNNModule):
                 self.test_evaluator.update(out, y)
         return {'loss': loss, 'preds': out, 'target': y, 'loader_idx': dataloader_idx}
 
-    def on_validation_epoch_end(self) -> None:
+    def on_validation_epoch_end(self):
         self.log("val/metric",
                  self.val_evaluator.compute(),
                  prog_bar=True,
@@ -193,7 +187,7 @@ class PlGNNTestonValModule(PlGNNModule):
         # set test validation interval to zero to performance test dataset validation.
         self.test_eval_still = 0
 
-    def on_test_epoch_start(self) -> None:
+    def on_test_epoch_start(self):
         self.set_test_eval_still()
 
     def test_step(self,
@@ -203,7 +197,7 @@ class PlGNNTestonValModule(PlGNNModule):
         results = self.validation_step(batch, batch_idx, dataloader_idx)
         return results
 
-    def on_test_epoch_end(self) -> None:
+    def on_test_epoch_end(self):
         self.on_validation_epoch_end()
 
 

@@ -1,5 +1,6 @@
 """
-QM9 dataset.
+QM9 dataset. adapted from PyG package source code:
+https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/datasets/qm9.html#QM9
 """
 
 import os
@@ -136,7 +137,9 @@ class QM9(InMemoryDataset):
     raw_url2 = 'https://ndownloader.figshare.com/files/3195404'
     processed_url = 'https://data.pyg.org/datasets/qm9_v3.zip'
 
-    def __init__(self, root: str, transform: Optional[Callable] = None,
+    def __init__(self,
+                 root: str,
+                 transform: Optional[Callable] = None,
                  pre_transform: Optional[Callable] = None,
                  pre_filter: Optional[Callable] = None):
         super().__init__(root, transform, pre_transform, pre_filter)

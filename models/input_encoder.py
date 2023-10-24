@@ -2,6 +2,8 @@
 Different feature input encoder for different dataset and feature type.
 """
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -24,8 +26,7 @@ class EmbeddingEncoder(nn.Module):
     def reset_parameters(self):
         self.init_proj.reset_parameters()
 
-    def forward(self,
-                x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.init_proj(x)
 
 
@@ -45,8 +46,7 @@ class LinearEncoder(nn.Module):
     def reset_parameters(self):
         self.init_proj.reset_parameters()
 
-    def forward(self,
-                x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.init_proj(x)
 
 
@@ -54,12 +54,12 @@ class QM9InputEncoder(nn.Module):
     r"""Input encoder for QM9 dataset.
     Args:
         hidden_channels (int): Hidden size.
-        use_pos (bool): If True, add position feature to embedding.
+        use_pos (bool, optional): If True, add position feature to embedding.
     """
 
     def __init__(self,
                  hidden_channels: int,
-                 use_pos: bool = False):
+                 use_pos: Optional[bool] = False):
         super(QM9InputEncoder, self).__init__()
         self.use_pos = use_pos
         if use_pos:
@@ -73,8 +73,7 @@ class QM9InputEncoder(nn.Module):
         self.init_proj.reset_parameters()
         self.z_embedding.reset_parameters()
 
-    def forward(self,
-                x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         z = x[:, 0].squeeze().long()
         x = x[:, 1:]
         z_emb = self.z_embedding(z)
@@ -86,9 +85,7 @@ class QM9InputEncoder(nn.Module):
 
 
 @torch.jit.script
-def gaussian(x: Tensor,
-             mean: Tensor,
-             std: Tensor) -> Tensor:
+def gaussian(x: Tensor, mean: Tensor, std: Tensor) -> Tensor:
     r"""Gaussian basis.
     Args:
         x (Tensor): Input value tensor.
@@ -106,8 +103,7 @@ class RDEncoder(nn.Module):
         hidden_channels (int): Hidden size of the model.
     """
 
-    def __init__(self,
-                 hidden_channels: int):
+    def __init__(self, hidden_channels: int):
         super().__init__()
         self.hidden_channels = hidden_channels
         self.means = nn.Embedding(1, self.hidden_channels)
@@ -118,8 +114,7 @@ class RDEncoder(nn.Module):
         nn.init.uniform_(self.means.weight, 0, 3)
         nn.init.uniform_(self.stds.weight, 0, 3)
 
-    def forward(self,
-                x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = x.view(-1, 1).expand(-1, self.hidden_channels)
         mean = self.means.weight.float().view(-1)
         std = self.stds.weight.float().view(-1).abs() + 1e-2
@@ -132,7 +127,7 @@ class AtomEncoder(torch.nn.Module):
         hidden_channels (int): Hidden size of the model.
     """
 
-    def __init__(self, hidden_channels):
+    def __init__(self, hidden_channels: int):
         super(AtomEncoder, self).__init__()
         self.hidden_channels = hidden_channels
         self.atom_embedding_list = torch.nn.ModuleList()
@@ -146,7 +141,7 @@ class AtomEncoder(torch.nn.Module):
         for l in self.atom_embedding_list:
             l.reset_parameters()
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x_embedding = 0
         for i in range(x.shape[1]):
             x_embedding += self.atom_embedding_list[i](x[:, i])
@@ -160,8 +155,7 @@ class BondEncoder(torch.nn.Module):
         hidden_channels (int): Hidden size of the model.
     """
 
-    def __init__(self,
-                 hidden_channels: int):
+    def __init__(self, hidden_channels: int):
         super(BondEncoder, self).__init__()
         self.hidden_channels = hidden_channels
         self.bond_embedding_list = torch.nn.ModuleList()
@@ -175,7 +169,7 @@ class BondEncoder(torch.nn.Module):
         for l in self.bond_embedding_list:
             l.reset_parameters()
 
-    def forward(self, edge_attr):
+    def forward(self, edge_attr: Tensor) -> Tensor:
         bond_embedding = 0
         for i in range(edge_attr.shape[-1]):
             bond_embedding += self.bond_embedding_list[i](edge_attr[..., i])

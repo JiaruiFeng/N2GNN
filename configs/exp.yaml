@@ -6,5 +6,6 @@ gnn_name: 'GINEM'
 model_name: 'N2GNN'
 num_hops: 3
 hidden_channels: 48
+inner_channels: 24
 num_layers: 4
 policy: "sparse_ego"

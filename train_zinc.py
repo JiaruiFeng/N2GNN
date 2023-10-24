@@ -5,11 +5,11 @@ import torch.cuda
 import torch.nn as nn
 import torchmetrics
 import wandb
-import pytorch_lightning as pl
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Timer
-from pytorch_lightning.callbacks.progress import TQDMProgressBar
-from pytorch_lightning.loggers import WandbLogger
+from lightning.pytorch import seed_everything
+from lightning.pytorch import Trainer
+from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, Timer
+from lightning.pytorch.callbacks.progress import TQDMProgressBar
 from torch_geometric.datasets import ZINC
 import train_utils
 from interfaces.pl_data_interface import PlPyGDataTestonValModule
@@ -56,7 +56,7 @@ def main():
 
         # Set random seed
         seed = train_utils.get_seed(args.seed)
-        pl.seed_everything(seed)
+        seed_everything(seed)
 
         datamodule = PlPyGDataTestonValModule(train_dataset=train_dataset,
                                               val_dataset=val_dataset,
@@ -68,7 +68,7 @@ def main():
         evaluator = torchmetrics.MeanAbsoluteError()
 
         init_encoder = EmbeddingEncoder(28, args.hidden_channels)
-        edge_encoder = EmbeddingEncoder(4, args.hidden_channels)
+        edge_encoder = EmbeddingEncoder(4, args.inner_channels)
 
         modelmodule = PlGNNTestonValModule(loss_criterion=loss_cri,
                                            evaluator=evaluator,
@@ -92,6 +92,7 @@ def main():
                    "final/best_test_metric": test_result["test/metric"],
                    "final/avg_train_time_epoch": timer.time_elapsed("train") / args.num_epochs,
                    }
+        print("torch.cuda.max_memory_reserved: %fGB" % (torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024))
         logger.log_metrics(results)
         wandb.finish()
 

@@ -37,8 +37,7 @@ class GraphClassification(nn.Module):
 
         self.reset_parameters()
 
-    def weights_init(self,
-                     m: nn.Module):
+    def weights_init(self, m: nn.Module):
         if hasattr(m, "reset_parameters"):
             m.reset_parameters()
 
@@ -47,8 +46,7 @@ class GraphClassification(nn.Module):
         self.classifier.apply(self.weights_init)
         self.pool.reset_parameters()
 
-    def forward(self,
-                data: Data) -> Tensor:
+    def forward(self, data: Data) -> Tensor:
         batch = data.node2graph
         # node representation
         x = self.embedding_model(data)
@@ -80,8 +78,7 @@ class GraphRegression(nn.Module):
 
         self.reset_parameters()
 
-    def weights_init(self,
-                     m: nn.Module):
+    def weights_init(self, m: nn.Module):
         if hasattr(m, "reset_parameters"):
             m.reset_parameters()
 
@@ -90,8 +87,7 @@ class GraphRegression(nn.Module):
         self.regressor.apply(self.weights_init)
         self.pool.reset_parameters()
 
-    def forward(self,
-                data: Data) -> Tensor:
+    def forward(self, data: Data) -> Tensor:
         batch = data.node2graph
         # node representation
         x = self.embedding_model(data)
@@ -119,8 +115,7 @@ class NodeClassification(nn.Module):
 
         self.reset_parameters()
 
-    def weights_init(self,
-                     m: nn.Module):
+    def weights_init(self, m: nn.Module):
         if hasattr(m, "reset_parameters"):
             m.reset_parameters()
 
@@ -128,8 +123,7 @@ class NodeClassification(nn.Module):
         self.embedding_model.reset_parameters()
         self.classifier.apply(self.weights_init)
 
-    def forward(self,
-                data: Data) -> Tensor:
+    def forward(self, data: Data) -> Tensor:
         # node representation
         x = self.embedding_model(data)
         return self.classifier(x)
@@ -141,8 +135,7 @@ class NodeRegression(nn.Module):
         embedding_model (nn.Module): GNN embedding model.
     """
 
-    def __init__(self,
-                 embedding_model: nn.Module):
+    def __init__(self, embedding_model: nn.Module):
         super(NodeRegression, self).__init__()
         self.embedding_model = embedding_model
         self.hidden_channels = embedding_model.hidden_channels
@@ -152,8 +145,7 @@ class NodeRegression(nn.Module):
 
         self.reset_parameters()
 
-    def weights_init(self,
-                     m: nn.Module):
+    def weights_init(self, m: nn.Module):
         if hasattr(m, "reset_parameters"):
             m.reset_parameters()
 
@@ -161,8 +153,7 @@ class NodeRegression(nn.Module):
         self.embedding_model.reset_parameters()
         self.regressor.apply(self.weights_init)
 
-    def forward(self,
-                data: Data) -> Tensor:
+    def forward(self, data: Data) -> Tensor:
         # node representation
         x = self.embedding_model(data)
         return self.regressor(x).squeeze()

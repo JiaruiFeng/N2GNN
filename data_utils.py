@@ -2,17 +2,19 @@
 Utils file for processing data.
 """
 
+from typing import Optional, Any
+
+import networkx as nx
 import numpy as np
+import scipy.sparse as sparse
 import torch
 from torch import Tensor, LongTensor
 from torch_geometric.data import Data
-import scipy.sparse as sparse
-import networkx as nx
+
 from models.utils import get_pyg_attr
 
 
-def edge_list_to_sparse_adj(edge_list: np.ndarray,
-                            num_nodes: int) -> sparse.coo_matrix:
+def edge_list_to_sparse_adj(edge_list: np.ndarray, num_nodes: int) -> sparse.coo_matrix:
     r"""Convert graph edge list to a sparse adjacency matrix.
     Args:
         edge_list (np.ndarray): Edge list of the graph.
@@ -24,13 +26,13 @@ def edge_list_to_sparse_adj(edge_list: np.ndarray,
 
 
 def shortest_dist_sparse_mult(adj_mat: sparse.coo_matrix,
-                              hop: int = 6,
-                              source: int = None) -> np.ndarray:
+                              hop: Optional[int] = 6,
+                              source: Optional[int] = None) -> np.ndarray:
     r"""Compute the shortest path distance given a graph adjacency matrix.
     Args:
         adj_mat (sparse.coo_matrix): Sparse graph adjacency matrix.
-        hop (int): The maximum number of hop to consider when computing the shortest path distance.
-        source (int): Source node for compute the shortest path distance.
+        hop (int, optional): The maximum number of hop to consider when computing the shortest path distance.
+        source (int, optional): Source node for compute the shortest path distance.
                       If not specified, return the shortest path distance matrix.
     """
     if source is not None:
@@ -52,8 +54,7 @@ def shortest_dist_sparse_mult(adj_mat: sparse.coo_matrix,
     return np.asarray(neighbor_dist)
 
 
-def extract_spd_feature(data: Data,
-                        num_hops: int) -> Data:
+def extract_spd_feature(data: Data, num_hops: int) -> Data:
     r"""Extract the shortest path distance features given PyG data object.
     Args:
         data (Data): A PyG graph data.
@@ -108,9 +109,10 @@ class TupleData(Data):
     r"""Data abstract class for 2-tuple based data. rewrite __inc__ function to adapt different increment
         value for some keys.
     """
+
     def __inc__(self,
-                key,
-                value,
+                key: str,
+                value: Any,
                 *args,
                 **kwargs):
         if key in ["tuple2second", "original_edge_index"]:
@@ -134,17 +136,18 @@ class FWL2t:
 
     Args:
         num_hops (int): Number of hop in ego network.
-        sparse (bool): If true, delete tuple (u, v) that not in any aggregation to save memory.
-        ego_net (bool): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
-        hierarchical (bool): If true, add index for hierarchical pooling in message passing.
-        add_rd (bool): If true, add resistance distance as additional augmented feature.
+        sparse (bool, optional): If true, delete tuple (u, v) that not in any aggregation to save memory.
+        ego_net (bool, optional): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
+        hierarchical (bool, optional): If true, add index for hierarchical pooling in message passing.
+        add_rd (bool, optional): If true, add resistance distance as additional augmented feature.
     """
+
     def __init__(self,
                  num_hops: int,
-                 sparse: bool = False,
-                 ego_net: bool = True,
-                 hierarchical: bool = False,
-                 add_rd: bool = False):
+                 sparse: Optional[bool] = False,
+                 ego_net: Optional[bool] = True,
+                 hierarchical: Optional[bool] = False,
+                 add_rd: Optional[bool] = False):
         super().__init__()
         self.num_hops = num_hops
         self.sparse = sparse
@@ -159,13 +162,12 @@ class FWL2t:
                              edge_index: LongTensor,
                              mask: Tensor,
                              num_nodes: int,
-                             edge_attr: Tensor = None,
-                             ego_net: bool = True,
-                             hierarchical: bool = False):
+                             edge_attr: Optional[Tensor] = None,
+                             ego_net: Optional[bool] = True,
+                             hierarchical: Optional[bool] = False):
         raise NotImplemented
 
-    def __call__(self,
-                 data: Data) -> Data:
+    def __call__(self, data: Data) -> Data:
         assert data.is_undirected()
         num_nodes = data.num_nodes
         edge_index = data.edge_index
@@ -201,11 +203,11 @@ class FWL2t:
         embedding_mask = torch.zeros_like(spd).long()
         embedding_mask[torch.unique(edge_index[0])] = 1
         root_index = torch.tensor([i * num_nodes + i for i in range(num_nodes)]).long()
-        #prevent isolated node be ruled out in sparse version.
+        # prevent isolated node be ruled out in sparse version.
         embedding_mask[root_index] = 1
-        #(u, v) | v in V(G)
-        #tuple2first = torch.repeat_interleave(torch.arange(num_nodes), num_nodes)
-        #(u, v) | u in V(G)
+        # {(u, v) | v in V(G)}
+        # tuple2first = torch.repeat_interleave(torch.arange(num_nodes), num_nodes)
+        # {(u, v) | u in V(G)}
         tuple2second = torch.arange(num_nodes).repeat(num_nodes)
         node2graph = torch.tensor([0 for _ in range(num_nodes)]).long()
 
@@ -213,10 +215,10 @@ class FWL2t:
             # reindexing
             keep_index = embedding_mask.bool()
             node_index_dict = dict(zip(torch.arange(embedding_mask.size(0))[keep_index].tolist(),
-                                  torch.arange(torch.sum(embedding_mask == 1)).tolist()))
+                                       torch.arange(torch.sum(embedding_mask == 1)).tolist()))
             edge_index = edge_index.apply_(node_index_dict.get)
             root_index = root_index.apply_(node_index_dict.get)
-            #tuple2first = tuple2first[keep_index]
+            # tuple2first = tuple2first[keep_index]
             tuple2second = tuple2second[keep_index]
             z0 = z0[keep_index]
             if z1 is not None:
@@ -232,7 +234,6 @@ class FWL2t:
             if self.sparse:
                 second2tuple = second2tuple.apply_(node_index_dict.get)
 
-
         return TupleData(x=x,
                          z0=z0,
                          z1=z1,
@@ -241,21 +242,21 @@ class FWL2t:
                          first2second=first2second,
                          second2tuple=second2tuple,
                          num_first=num_first,
-                         #tuple2first=tuple2first,
+                         # tuple2first=tuple2first,
                          tuple2second=tuple2second,
                          node2graph=node2graph,
                          y=data.y,
                          root_index=root_index,
                          original_num_nodes=num_nodes,
-                         #original_edge_index=data.edge_index,
-                         #original_edge_attr=data.edge_attr,
+                         # original_edge_index=data.edge_index,
+                         # original_edge_attr=data.edge_attr,
                          num_nodes=x.size(0))
 
 
 def compute_edge_product(index: int,
                          count: Tensor,
                          edge_index: LongTensor,
-                         edge_attr: Tensor = None):
+                         edge_attr: Optional[Tensor] = None):
     r"""Given an input edge list and node index, compute product edges for this node. Namely,
     Given :math:   u, \forall  \{(u, v) | v \in V(G)\}, compute :math: `(w_1, w_2) \in \mathcal{N}(v) \times \mathcal{N}(u).
 
@@ -263,7 +264,7 @@ def compute_edge_product(index: int,
         index (int): The index of node to compute deep product edge.
         count (Tensor): A tensor to save the number of edge for each node.
         edge_index (LongTensor): Input edge list for a graph.
-        edge_attr (Tensor): If provided, compute product edge attr.
+        edge_attr (Tensor, optional): If provided, compute product edge attr.
 
     """
     num_edges = edge_index.size(-1)
@@ -289,22 +290,21 @@ def compute_edge_product(index: int,
 def generate_22_tuple_edges(edge_index: LongTensor,
                             mask: Tensor,
                             num_nodes: int,
-                            edge_attr: Tensor = None,
-                            ego_net: bool = True,
-                            hierarchical: bool = False):
+                            edge_attr: Optional[Tensor] = None,
+                            ego_net: Optional[bool] = True,
+                            hierarchical: Optional[bool] = False):
     r"""Generate tuple edges for N^2-GNN.
     Args:
         edge_index (LongTensor): Input edge list for a graph.
         mask (Tensor): A mask to indicate whether a tuple (u, v) exist in at least one aggregation.
         num_nodes (int): Number of nodes in the graph.
-        edge_attr (Tensor): If provided, compute product edge attr.
-        ego_net (bool): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
-        hierarchical (bool): If true, add index for hierarchical pooling in message passing.
+        edge_attr (Tensor, optional): If provided, compute product edge attr.
+        ego_net (bool, optional): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
+        hierarchical (bool, optional): If true, add index for hierarchical pooling in message passing.
     """
     count = torch.zeros([num_nodes]).long()
     unique, unique_count = torch.unique(edge_index[0], return_counts=True)
     count[unique] = unique_count
-
 
     uv_edge_index_list = []
     uw1_edge_index_list = []
@@ -329,7 +329,8 @@ def generate_22_tuple_edges(edge_index: LongTensor,
             edge_inc = torch.arange(count[i])
             edge_inc_list = [edge_inc.repeat(count[j]) + j * count[i] for j in range(num_nodes)]
             first_to_second = torch.hstack(edge_inc_list) + edge_offset
-            second_to_tuple = torch.hstack([torch.zeros(count[i], dtype=torch.long) + j for j in range(num_nodes)]) + offset
+            second_to_tuple = torch.hstack(
+                [torch.zeros(count[i], dtype=torch.long) + j for j in range(num_nodes)]) + offset
 
         uv_edge_index = w1_subgraph_edges[0] + offset
         uw1_edge_index = w1_subgraph_edges[1] + offset
@@ -413,9 +414,9 @@ class N2FWL(FWL2t):
                              edge_index: LongTensor,
                              mask: Tensor,
                              num_nodes: int,
-                             edge_attr: Tensor = None,
-                             ego_net: bool = True,
-                             hierarchical: bool = False):
+                             edge_attr: Optional[Tensor] = None,
+                             ego_net: Optional[bool] = True,
+                             hierarchical: Optional[bool] = False):
         return generate_22_tuple_edges(edge_index,
                                        mask,
                                        num_nodes,
@@ -426,22 +427,21 @@ class N2FWL(FWL2t):
 
 def get_data_transform(model_name: str,
                        num_hops: int,
-                       sparse: bool = False,
-                       ego_net: bool = True,
-                       hierarchical: bool = False,
-                       add_rd: bool = False
+                       sparse: Optional[bool] = False,
+                       ego_net: Optional[bool] = True,
+                       hierarchical: Optional[bool] = False,
+                       add_rd: Optional[bool] = False
                        ):
     r"""Given model name, return the corresponding data transform function.
     Args:
         model_name (str): The name of the model.
         num_hops (int): Number of hop in ego network.
-        sparse (bool): If true, delete tuple (u, v) that not in any aggregation to save memory.
-        ego_net (bool): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
-        hierarchical (bool): If true, add index for hierarchical pooling in message passing.
-        add_rd (bool): If true, add resistance distance as additional augmented feature.
+        sparse (bool, optional): If true, delete tuple (u, v) that not in any aggregation to save memory.
+        ego_net (bool, optional): If true, only tuple (u, v) with SPD less or equal to num_hops can aggregate or receiving information.
+        hierarchical (bool, optional): If true, add index for hierarchical pooling in message passing.
+        add_rd (bool, optional): If true, add resistance distance as additional augmented feature.
     """
     if model_name == "N2GNN":
         return N2FWL(num_hops, sparse, ego_net, hierarchical, add_rd)
     else:
         raise NotImplemented
-

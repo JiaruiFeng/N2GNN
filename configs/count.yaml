@@ -6,8 +6,10 @@ num_epochs: 2000
 gnn_name: 'GINEM'
 model_name: 'N2GNN'
 hidden_channels: 96
+inner_channels: 32
 num_layers: 5
 runs: 3
 patience: 10
 factor: 0.9
 norm_type: "None"
+policy: "sparse_ego"

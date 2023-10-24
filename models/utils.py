@@ -9,8 +9,7 @@ import torch.nn as nn
 from torch_geometric.data import Data
 
 
-def clones(module: nn.Module,
-           N: int) -> nn.ModuleList:
+def clones(module: nn.Module, N: int) -> nn.ModuleList:
     r"""Layer clone function, used for concise code writing. If input is None, simply return None.
     Args:
         module (nn.Module): Module want to clone.
@@ -22,8 +21,7 @@ def clones(module: nn.Module,
         return nn.ModuleList(c(module) for _ in range(N))
 
 
-def get_pyg_attr(data: Data,
-                 attr: str) -> Any:
+def get_pyg_attr(data: Data, attr: str) -> Any:
     r"""Get attribute from PyG data. If not exist, return None instead.
     Args:
         data (torch_geometric.Data): PyG data object.

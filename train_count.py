@@ -7,13 +7,13 @@ import torch
 import torch.nn as nn
 from models.input_encoder import EmbeddingEncoder
 import train_utils
-import pytorch_lightning as pl
 from interfaces.pl_model_interface import PlGNNTestonValModule
 from interfaces.pl_data_interface import PlPyGDataTestonValModule
-from pytorch_lightning import Trainer
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Timer
-from pytorch_lightning.callbacks.progress import TQDMProgressBar
+from lightning.pytorch import seed_everything
+from lightning.pytorch import Trainer
+from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, Timer
+from lightning.pytorch.callbacks.progress import TQDMProgressBar
 import wandb
 from torchmetrics import MeanAbsoluteError
 import torch_geometric.transforms as T
@@ -81,7 +81,7 @@ def main():
 
         # Set random seed
         seed = train_utils.get_seed(args.seed)
-        pl.seed_everything(seed)
+        seed_everything(seed)
 
         datamodule = PlPyGDataTestonValModule(train_dataset=train_dataset,
                                               val_dataset=val_dataset,

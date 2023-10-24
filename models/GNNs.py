@@ -3,13 +3,13 @@ GNN framework for N2GNN.
 """
 
 import torch.nn as nn
-from torch_geometric.nn import global_add_pool
 from torch import Tensor
 from models.mlp import MLP
 from .jumping_knowledge import JumpingKnowledge
 from .norms import Normalization
 from .utils import *
 import torch
+from typing import Optional, List
 
 
 class N2GNN(nn.Module):
@@ -19,29 +19,29 @@ class N2GNN(nn.Module):
         gnn_layer (nn.Module): gnn layer used in GNN model.
         init_encoder (nn.Module): initial node feature encoding.
         feature_encoders (list): Additional feature encoder.
-        edge_encoder (nn.Module): Edge feature encoder.
-        JK (str): Method of jumping knowledge, last,concat,max or sum.
-        norm_type (str): Method of normalization, choose from (Batch, Layer, Instance, GraphSize, Pair).
-        residual (bool): If ture, add residual connection.
-        initial_eps (float): Epsilon for center node information in aggregation.
-        train_eps (bool): If true, the epsilon is trainable.
-        drop_prob (float): dropout rate.
-        add_root (bool): If true, add root embedding at each layer.
+        edge_encoder (nn.Module, optional): Edge feature encoder.
+        JK (str, optional): Method of jumping knowledge, last,concat,max or sum.
+        norm_type (str, optional): Method of normalization, choose from (Batch, Layer, Instance, GraphSize, Pair).
+        residual (bool, optional): If ture, add residual connection.
+        initial_eps (float, optional): Epsilon for center node information in aggregation.
+        train_eps (bool, optional): If true, the epsilon is trainable.
+        drop_prob (float, optional): dropout rate.
+        add_root (bool, optional): If true, add root embedding at each layer.
     """
 
     def __init__(self,
                  num_layers: int,
                  gnn_layer: nn.Module,
                  init_encoder: nn.Module,
-                 feature_encoders: list,
-                 edge_encoder: nn.Module = None,
-                 JK: str = "last",
-                 norm_type: bool = "Batch",
-                 residual: bool = False,
-                 initial_eps: float = 0.0,
-                 train_eps: bool = False,
-                 drop_prob: float = 0.0,
-                 add_root: bool = True):
+                 feature_encoders: List[nn.Module],
+                 edge_encoder: Optional[nn.Module] = None,
+                 JK: Optional[str] = "last",
+                 norm_type: Optional[str] = "Batch",
+                 residual: Optional[bool] = False,
+                 initial_eps: Optional[float] = 0.0,
+                 train_eps: Optional[bool] = False,
+                 drop_prob: Optional[float] = 0.0,
+                 add_root: Optional[bool] = True):
         super(N2GNN, self).__init__()
         self.num_layers = num_layers
         self.hidden_channels = gnn_layer.out_channels
@@ -72,7 +72,6 @@ class N2GNN(nn.Module):
         # node feature enhancement
         if self.add_root:
             mlp = MLP(self.hidden_channels, self.hidden_channels, self.norm_type)
-            # proj = Linear(self.hidden_channels, self.hidden_channels)
             self.root_mlps = clones(mlp, self.num_layers)
             self.root_norms = c(norms)
             if self.train_eps:
@@ -153,5 +152,4 @@ class N2GNN(nn.Module):
 
             h_list.append(out)
 
-        h_list = [global_add_pool(h, node_idx) for h in h_list]
-        return self.jk_decoder(h_list)
+        return self.jk_decoder(h_list, node_idx)

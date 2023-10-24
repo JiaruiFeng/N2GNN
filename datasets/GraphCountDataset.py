@@ -3,29 +3,44 @@ Graph substructure counting dataset.
 """
 
 import os
+from typing import Callable, Optional, List
+
 import numpy as np
 import scipy.io as sio
 import torch
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.data.data import Data
-from typing import Callable
 
 
 class GraphCountDatasetI2(InMemoryDataset):
-    r"""Graph substructure counting dataset from I2GNN paper : https://openreview.net/pdf?id=kDSmxOspsXQ.
+    r"""Graph substructure counting dataset. Adapted from I2GNN paper : https://arxiv.org/pdf/2210.13978.pdf.
+        Target name:
+            For count_cycle:
+                0: 3-cycle
+                1: 4-cycle
+                2: 5-cycle
+                3: 6-cycle
+            For count_graphlet:
+                0: Tailed triangle
+                1: Chordal cycle
+                2: 4-Clique
+                3: 4-Path
+                4: Triangle-rectangle
+
     Args:
-        dataname (str): Dataset name for loading, choose from (count_cycle, count_graphlet).
-        root (str): Root path for saving dataset.
-        split (str): Dataset split, choose from (train, val, test).
-        transform (Callable): Data transformation function after saving.
-        pre_transform (Callable): Data transformation function before saving.
+        dataname (str, optional): Dataset name for loading, choose from (count_cycle, count_graphlet).
+        root (str, optional): Root path for saving dataset.
+        split (str, optional): Dataset split, choose from (train, val, test).
+        transform (Callable, optional): Data transformation function after saving.
+        pre_transform (Callable, optional): Data transformation function before saving.
     """
+
     def __init__(self,
-                 dataname: str = 'count_cycle',
-                 root: str = 'data',
-                 split: str = 'train',
-                 transform: Callable = None,
-                 pre_transform: Callable = None):
+                 dataname: Optional[str] = 'count_cycle',
+                 root: Optional[str] = 'data',
+                 split: Optional[str] = 'train',
+                 transform: Optional[Callable] = None,
+                 pre_transform: Optional[Callable] = None):
         self.root = root
         self.dataname = dataname
         self.transform = transform
@@ -36,27 +51,29 @@ class GraphCountDatasetI2(InMemoryDataset):
         split_id = 0 if split == 'train' else 1 if split == 'val' else 2
         self.data, self.slices = torch.load(self.processed_paths[split_id])
         self.y_dim = self.data.y.size(-1)
-        # self.e_dim = torch.max(self.data.edge_attr).item() + 1
 
     @property
-    def raw_dir(self):
+    def raw_dir(self) -> str:
         name = 'raw'
         return os.path.join("data", self.dataname, name)
 
     @property
-    def processed_dir(self):
+    def processed_dir(self) -> str:
         return self.processed
 
     @property
-    def raw_file_names(self):
+    def raw_file_names(self) -> List[str]:
         names = ["data"]
         return ['{}.mat'.format(name) for name in names]
 
     @property
-    def processed_file_names(self):
+    def processed_file_names(self) -> List[str]:
         return ['data_tr.pt', 'data_val.pt', 'data_te.pt']
 
-    def adj2data(self, A, y):
+    def download(self):
+        pass
+
+    def adj2data(self, A: np.ndarray, y: np.ndarray) -> Data:
         # x: (n, d), A: (e, n, n)
         # begin, end = np.where(np.sum(A, axis=0) == 1.)
         begin, end = np.where(A == 1.)
@@ -74,7 +91,7 @@ class GraphCountDatasetI2(InMemoryDataset):
         return Data(edge_index=edge_index, y=torch.tensor(y), num_nodes=torch.tensor([num_nodes]))
 
     @staticmethod
-    def wrap2data(d):
+    def wrap2data(d: dict) -> Data:
         # x: (n, d), A: (e, n, n)
         x, A, y = d['x'], d['A'], d['y']
         x = torch.tensor(x)

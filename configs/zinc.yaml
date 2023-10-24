@@ -6,5 +6,6 @@ gnn_name: 'GINEM'
 model_name: 'N2GNN+'
 num_hops: 3
 hidden_channels: 96
+inner_channels: 20
 num_layers: 6
 runs: 10

@@ -28,7 +28,7 @@ def args_setup():
     parser.add_argument('--drop_prob', type=float, default=0.0,
                         help='Probability of zeroing an activation in dropout models.')
     parser.add_argument('--batch_size', type=int, default=128, help='Batch size per GPU.')
-    parser.add_argument('--num_workers', type=int, default=4, help='Number of worker.')
+    parser.add_argument('--num_workers', type=int, default=0, help='Number of worker.')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate.')
     parser.add_argument('--min_lr', type=float, default=1e-6, help='Minimum learning rate.')
     parser.add_argument('--l2_wd', type=float, default=0., help='L2 weight decay.')
@@ -48,7 +48,7 @@ def args_setup():
                                                                   "sparse_ego",
                                                                   "sparse_noego"),
                         help="Policy of data generation in N2GNN. If dense, keep tuple that don't have any aggregation."
-                             "if ego, further restrict all tuple mask have distance less than num_hops.")
+                             "if ego, further restrict all tuple mast have distance less than or equal to num_hops.")
     parser.add_argument('--message_pool', default="plain", choices=("plain", "hierarchical"),
                         help="message pooling way in N2GNN, if set to plain, pooling all edges together. If set to"
                              "hierarchical, compute index during preprocessing for hierarchical pooling, must be used"
@@ -63,6 +63,9 @@ def args_setup():
     parser.add_argument('--tuple_size', type=int, default=5, help="Length of tuple in tuple aggregation.")
     parser.add_argument('--num_hops', type=int, default=3, help="Number of hop in ego-net selection.")
     parser.add_argument("--hidden_channels", type=int, default=96, help="Hidden size of the model.")
+    parser.add_argument("--inner_channels", type=int, default=32,
+                        help="Inner channel size when doing tuple aggregation. Mainly used for reduce memory cost "
+                             "during the aggregation and gradients saving.")
     parser.add_argument('--wo_node_feature', action='store_true',
                         help='If true, remove node feature from model.')
     parser.add_argument('--wo_edge_feature', action='store_true',

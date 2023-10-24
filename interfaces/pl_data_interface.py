@@ -2,32 +2,32 @@
 Pytorch lightning data module for PyG dataset.
 """
 
-from typing import Tuple
-import pytorch_lightning as pl
+from typing import Tuple, Optional, List
+from lightning.pytorch import LightningDataModule
 from torch_geometric.data import Dataset
 from torch_geometric.loader import DataLoader
 
 
-class PlPyGDataModule(pl.LightningDataModule):
+class PlPyGDataModule(LightningDataModule):
     r"""Pytorch lightning data module for PyG dataset.
     Args:
         train_dataset (Dataset): Train PyG dataset.
         val_dataset (Dataset): Validation PyG dataset.
         test_dataset (Dataset): Test PyG dataset.
-        batch_size (int): Batch size.
-        num_workers (int): Number of process for data loader.
-        follow_batch (list): A list of key that will create a corresponding batch key in data loader.
-        drop_last (bool): If true, drop the last batch during the training to avoid loss/metric inconsistence.
+        batch_size (int, optional): Batch size.
+        num_workers (int, optional): Number of process for data loader.
+        follow_batch (list, optional): A list of key that will create a corresponding batch key in data loader.
+        drop_last (bool, optional): If true, drop the last batch during the training to avoid loss/metric inconsistence.
     """
 
     def __init__(self,
                  train_dataset: Dataset,
                  val_dataset: Dataset,
                  test_dataset: Dataset,
-                 batch_size: int = 32,
-                 num_workers: int = 0,
-                 follow_batch: list = [],
-                 drop_last: bool = True):
+                 batch_size: Optional[int] = 32,
+                 num_workers: Optional[int] = 0,
+                 follow_batch: Optional[List[str]] = [],
+                 drop_last: Optional[bool] = True):
         super(PlPyGDataModule, self).__init__()
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
@@ -62,7 +62,7 @@ class PlPyGDataModule(pl.LightningDataModule):
 
 class PlPyGDataTestonValModule(PlPyGDataModule):
     r"""In validation mode, return both validation and test set for validation.
-        Should use with PlGNNTestonValModule.
+        Should use with PlGNNTestonValModule .
     """
 
     def val_dataloader(self) -> Tuple[DataLoader, DataLoader]:

@@ -3,6 +3,7 @@ Model construction.
 """
 
 from argparse import ArgumentParser
+
 from models.GNNs import *
 from models.gnn_convs import *
 from models.input_encoder import *
@@ -16,19 +17,17 @@ def make_gnn_layer(args: ArgumentParser) -> nn.Module:
     """
 
     HP = False
-    if args.gnn_name in ["GINEC", "GINECH"]:
-        conv_layer = GINETupleConcatConv
-    elif args.gnn_name in ["GINEM", "GINEMH"]:
+    if args.gnn_name in ["GINEM", "GINEMH"]:
         conv_layer = GINETupleMultiplyConv
     else:
         raise ValueError("Not supported GNN type")
-
     if args.gnn_name.endswith("H"):
         HP = True
 
     gnn_layer = conv_layer(args.hidden_channels,
                            args.hidden_channels,
                            args.tuple_size,
+                           inner_channels=args.inner_channels,
                            initial_eps=args.eps,
                            train_eps=args.train_eps,
                            norm_type=args.norm_type,
@@ -76,8 +75,7 @@ def make_GNN(args: ArgumentParser,
     return gnn
 
 
-def make_decoder(args: ArgumentParser,
-                 embedding_model: nn.Module) -> nn.Module:
+def make_decoder(args: ArgumentParser, embedding_model: nn.Module) -> nn.Module:
     r"""Make decoder layer for different dataset.
     Args:
         args (ArgumentParser): Arguments dict from argparser.
@@ -93,13 +91,13 @@ def make_decoder(args: ArgumentParser,
 
 
 def make_model(args: ArgumentParser,
-               init_encoder: nn.Module = None,
-               edge_encoder: nn.Module = None) -> nn.Module:
+               init_encoder: Optional[nn.Module] = None,
+               edge_encoder: Optional[nn.Module] = None) -> nn.Module:
     r"""Make learning model given input arguments.
     Args:
         args (ArgumentParser): Arguments dict from argparser.
-        init_encoder (nn.Module): Node feature initial encoder.
-        edge_encoder (nn.Module): Edge feature encoder.
+        init_encoder (nn.Module, optional): Node feature initial encoder.
+        edge_encoder (nn.Module, optional): Edge feature encoder.
     """
 
     gnn_layer = make_gnn_layer(args)

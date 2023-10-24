@@ -2,6 +2,8 @@
 Normalization layer.
 """
 
+from typing import Optional
+
 import torch.nn as nn
 from torch import Tensor
 from torch.nn import Identity
@@ -12,12 +14,12 @@ class Normalization(nn.Module):
     r"""Model normalization layer.
     Args:
         hidden_channels (int): Hidden size.
-        norm_type (str): Method of normalization, choose from (Batch, Layer, Instance, GraphSize, Pair).
+        norm_type (str, optional): Method of normalization, choose from (Batch, Layer, Instance, GraphSize, Pair).
     """
 
     def __init__(self,
                  hidden_channels: int,
-                 norm_type: str = "Batch"):
+                 norm_type: Optional[str] = "Batch"):
         super(Normalization, self).__init__()
         self.hidden_channels = hidden_channels
         self.norm_type = norm_type
@@ -40,14 +42,12 @@ class Normalization(nn.Module):
 
         self.reset_parameters()
 
-    def weights_init(self,
-                     m: nn.Module):
+    def weights_init(self, m: nn.Module):
         if hasattr(m, "reset_parameters"):
             m.reset_parameters()
 
     def reset_parameters(self):
         self.norm.apply(self.weights_init)
 
-    def forward(self,
-                x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.norm(x)
