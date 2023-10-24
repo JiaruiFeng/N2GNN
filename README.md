@@ -1,7 +1,7 @@
 # N2GNN
 This repository is the official implementation of the N2-GNN proposed in the [[NeurIPS23]Extending the Design Space of Graph Neural Networks by Rethinking Folklore Weisfeiler-Lehman](https://arxiv.org/pdf/2306.03266.pdf) (previous named "Towards Arbitrarily Expressive GNNs in $O(n^2)$ Space by Rethinking Folklore Weisfeiler-Lehman").
 
-### 🔥News
+## 🔥News
 - **2023. 10**: Update code base to version 2.0. In version 2.0, we:
   1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail will be provided in the camera-ready version of the paper. Stay tuned!
   2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC).
@@ -10,7 +10,7 @@ This repository is the official implementation of the N2-GNN proposed in the [[N
 - **2023. 09**: Our paper is accepted at NeurIPS 2023!
 
 
-### Requirements
+## Requirements
 ```
 python=3.8
 torch=2.0.1
@@ -20,7 +20,7 @@ wandb=0.13.11
 ```
 We also provide a [docker environment](https://hub.docker.com/repository/docker/wfrain/gracker/general) and corresponding [docker file](https://github.com/JiaruiFeng/python_docker) if users prefer a docker style setup. Before run the experiments, you may need to set up [wandb](https://docs.wandb.ai/quickstart#1.-set-up-wandb). 
 
-### Usage
+## Usage
 The result for all experiments will be uploaded to Wandb server with the project named as: 
 `[task]_<dataset_name>_<GNN_layer>_<GNN_model>_<num_layer>_<hidden_channels>_<data_type>_<num_hop>_[rd]`.\
 `task`: The number index of the task if dataset has multiple tasks (QM9; substructure counting).\
@@ -32,8 +32,8 @@ The result for all experiments will be uploaded to Wandb server with the project
 `num_hop`: Number of hop for overlapping subgraph.\
 `rd`: Name ends with rd means model add resistance distance as additional feature. 
 
-### Reproducibility
-#### ZINC-Subset and ZINC-Full
+## Reproducibility
+### ZINC-Subset and ZINC-Full
 For ZINC-Subset:
 ```
 python train_zinc.py --config_file=configs/zinc.yaml
@@ -81,10 +81,10 @@ To run the experiment on BREC dataset, you need first download `brec_v3_no4v_60c
 python train_BREC.py --config_file=configs/BREC.yaml
 ```
 
-### Contact
+## Contact
 Jiarui Feng (feng.jiarui@wustl.edu)
 
-### Citation
+## Citation
 If you find this work useful, please kindly cite our paper:
 ```
 @inproceedings{
