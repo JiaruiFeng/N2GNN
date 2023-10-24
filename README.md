@@ -9,6 +9,7 @@ This repository is the official implementation of the N2-GNN proposed in the [[N
 
 - **2023. 09**: Our paper is accepted at NeurIPS 2023!
 
+
 ### Requirements
 ```
 python=3.8
@@ -79,6 +80,9 @@ To run the experiment on BREC dataset, you need first download `brec_v3_no4v_60c
 ```
 python train_BREC.py --config_file=configs/BREC.yaml
 ```
+
+### Contact
+Jiarui Feng (feng.jiarui@wustl.edu)
 
 ### Citation
 If you find this work useful, please kindly cite our paper:
