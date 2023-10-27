@@ -17,7 +17,7 @@ from .mlp import MLP
 
 class GINETupleMultiplyConv(MessagePassing):
     r"""Graph isomorphism network layer with tuple aggregation.
-        The message of tuple is computed by multiply-> activation -> summation -> projection.
+        The message of tuple is computed by projection(down) -> multiply -> activation -> projection(up) -> concatenation -> projection.
     Args:
         in_channels (int): Input feature size.
         out_channels (int): Output feature size.
