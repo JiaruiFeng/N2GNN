@@ -105,7 +105,7 @@ class PlGNNModule(LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
-                    optimizer, factor=self.args.factor, patience=self.args.patience, min_lr=self.args.min_lr
+                    optimizer, mode=self.args.mode, factor=self.args.factor, patience=self.args.patience, min_lr=self.args.min_lr
                 ),
                 "monitor": "val/metric",
                 "frequency": 1,

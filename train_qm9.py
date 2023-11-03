@@ -173,6 +173,7 @@ def main():
 
         loss_cri = nn.MSELoss()
         evaluator = MeanAbsoluteErrorQM9(std[args.task].item(), conversion[args.task].item())
+        args.mode = "min"
         init_encoder = QM9InputEncoder(args.hidden_channels)
         edge_encoder = EmbeddingEncoder(4, args.inner_channels)
 
@@ -190,7 +191,7 @@ def main():
             logger=logger,
             callbacks=[
                 TQDMProgressBar(refresh_rate=5),
-                ModelCheckpoint(monitor="val/metric", mode="min"),
+                ModelCheckpoint(monitor="val/metric", mode=args.mode),
                 LearningRateMonitor(logging_interval="epoch"),
                 timer
             ]

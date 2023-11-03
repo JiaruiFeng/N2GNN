@@ -92,6 +92,7 @@ def main():
 
         loss_cri = nn.L1Loss()
         evaluator = MeanAbsoluteError()
+        args.mode = "min"
         init_encoder = EmbeddingEncoder(2, args.hidden_channels)
         modelmodule = PlGNNTestonValModule(loss_criterion=loss_cri,
                                            evaluator=evaluator,
@@ -106,7 +107,7 @@ def main():
                         logger=logger,
                         callbacks=[
                             TQDMProgressBar(refresh_rate=20),
-                            ModelCheckpoint(monitor="val/metric", mode="min"),
+                            ModelCheckpoint(monitor="val/metric", mode=args.mode),
                             LearningRateMonitor(logging_interval="epoch"),
                             timer
                         ]

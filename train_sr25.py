@@ -64,6 +64,7 @@ def main():
 
     loss_cri = nn.CrossEntropyLoss()
     evaluator = torchmetrics.classification.MulticlassAccuracy(num_classes=args.out_channels)
+    args.mode = "max"
     init_encoder = EmbeddingEncoder(2, args.hidden_channels)
     modelmodule = PlGNNTestonValModule(loss_criterion=loss_cri,
                                        evaluator=evaluator,
@@ -78,7 +79,7 @@ def main():
                       logger=logger,
                       callbacks=[
                         TQDMProgressBar(refresh_rate=20),
-                        ModelCheckpoint(monitor="val/metric", mode="max"),
+                        ModelCheckpoint(monitor="val/metric", mode=args.mode),
                         LearningRateMonitor(logging_interval="epoch"),
                         timer
                       ]

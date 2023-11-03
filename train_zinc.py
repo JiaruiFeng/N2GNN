@@ -66,7 +66,7 @@ def main():
                                               follow_batch=follow_batch)
         loss_cri = nn.L1Loss()
         evaluator = torchmetrics.MeanAbsoluteError()
-
+        args.mode = "min"
         init_encoder = EmbeddingEncoder(28, args.hidden_channels)
         edge_encoder = EmbeddingEncoder(4, args.inner_channels)
 
@@ -82,7 +82,7 @@ def main():
                           enable_progress_bar=True,
                           logger=logger,
                           callbacks=[TQDMProgressBar(refresh_rate=20),
-                                     ModelCheckpoint(monitor="val/metric", mode="min"),
+                                     ModelCheckpoint(monitor="val/metric", mode=args.mode),
                                      LearningRateMonitor(logging_interval="epoch"),
                                      timer])
 

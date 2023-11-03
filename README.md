@@ -3,8 +3,8 @@ This repository is the official implementation of the N2-GNN proposed in the [[N
 
 ## 🔥News
 - **2023. 10**: Update code base to version 2.0. In version 2.0, we:
-  1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail will be provided in the camera-ready version of the paper. Stay tuned!
-  2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC).
+  1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail is provided in the camera-ready version of the paper.
+  2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC). We achieve **new SOTA** among all GNN methods!
   3. Minor bugs fixing and comment polishing. 
 
 - **2023. 09**: Our paper is accepted at NeurIPS 2023!
