@@ -2,6 +2,7 @@
 This repository is the official implementation of the N2-GNN proposed in the [[NeurIPS23]Extending the Design Space of Graph Neural Networks by Rethinking Folklore Weisfeiler-Lehman](https://arxiv.org/pdf/2306.03266.pdf) (previous named "Towards Arbitrarily Expressive GNNs in $O(n^2)$ Space by Rethinking Folklore Weisfeiler-Lehman").
 
 ## 🔥News
+- **2024. 01**: Fix a bug on ZINC-full dataset. In the previous code, it uses the test set of ZINC-subset as the test set and casue the wrong result. After the correction, the final result for ZINC-full is **0.022 ± 0.002**. We will update the paper as soon as possible. Sorry for the mistake. 
 - **2023. 10**: Update code base to version 2.0. In version 2.0, we:
   1. Improve the implementation of N2GNN. The current implementation is more memory saving than the previous one. The detail is provided in the camera-ready version of the paper.
   2. Add experiment for [BREC dataset](https://github.com/GraphPKU/BREC). We achieve **new SOTA** among all GNN methods!

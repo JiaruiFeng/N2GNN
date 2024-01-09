@@ -41,7 +41,7 @@ def main():
                        transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
 
     test_dataset = ZINC(path,
-                        subset=True,
+                        subset=not args.full,
                         split="test",
                         pre_transform=pre_transform,
                         transform=train_utils.PostTransform(args.wo_node_feature, args.wo_edge_feature))
